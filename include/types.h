@@ -1,7 +1,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include <Arduino.h>
+#include <esp_wifi.h>
 
 typedef struct {
     uint8_t frame_control[2] = { 0xC0, 0x00 };
