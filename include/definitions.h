@@ -1,37 +1,31 @@
-#ifndef DEFINITIONS_H
-#define DEFINITIONS_H
+#pragma once
+#include <Arduino.h>
+#include <WiFi.h>
+#include <esp_wifi_types.h>
 
-#define LED 2
-#define SERIAL_DEBUG
-#define CHANNEL_MAX 13
-#define NUM_FRAMES_PER_DEAUTH 16
-#define DEAUTH_BLINK_TIMES 2
-#define DEAUTH_BLINK_DURATION 20
-#define DEAUTH_TYPE_SINGLE 0
-#define DEAUTH_TYPE_ALL 1
-#define DEAUTH_TYPE_NONE -1
+// WiFi Scan structures
+struct WiFiNetwork {
+    String ssid;
+    uint8_t bssid[6];
+    int32_t rssi;
+    uint8_t channel;
+    wifi_auth_mode_t encryption;
+    bool selected;
+};
 
-#ifdef SERIAL_DEBUG
-#define DEBUG_PRINT(...) Serial.print(__VA_ARGS__)
-#define DEBUG_PRINTLN(...) Serial.println(__VA_ARGS__)
-#define DEBUG_PRINTF(...) Serial.printf(__VA_ARGS__)
-#endif
+struct Station {
+    String mac;
+    String name;
+    uint8_t macBytes[6];
+    bool selected;
+};
 
-#ifndef SERIAL_DEBUG
-#define DEBUG_PRINT(...)
-#define DEBUG_PRINTLN(...)
-#define DEBUG_PRINTF(...)
-#endif
-
-#ifdef LED
-#define BLINK_LED(num_times, blink_duration) blink_led(num_times, blink_duration)
-#endif
-
-#ifndef LED
-#define BLINK_LED()
-#endif
-
-void blink_led(int num_times, int blink_duration);
+// Function declarations
 String getEncryptionType(wifi_auth_mode_t encryptionType);
-
-#endif
+void scanNetworks();
+void printNetworks();
+void printStations();
+void deauthNetwork(uint8_t networkIndex);
+void deauthStation(uint8_t stationIndex);
+void getRandomMac(uint8_t* mac);
+void setRandomMac();
