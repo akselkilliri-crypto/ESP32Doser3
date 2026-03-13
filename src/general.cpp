@@ -6,70 +6,62 @@
 // Get encryption type name
 String getEncryptionType(wifi_auth_mode_t encryptionType) {
     switch (encryptionType) {
-        case WIFI_AUTH_OPEN:
-            return "OPEN";
-        case WIFI_AUTH_WEP:
-            return "WEP";
-        case WIFI_AUTH_WPA_PSK:
-            return "WPA_PSK";
-        case WIFI_AUTH_WPA2_PSK:
-            return "WPA2_PSK";
-        case WIFI_AUTH_WPA_WPA2_PSK:
-            return "WPA_WPA2_PSK";
-        case WIFI_AUTH_WPA2_ENTERPRISE:
-            return "WPA2_ENTERPRISE";
-        case WIFI_AUTH_WPA3_PSK:
-            return "WPA3_PSK";
-        case WIFI_AUTH_WPA2_WPA3_PSK:
-            return "WPA2_WPA3_PSK";
-        default:
-            return "UNKNOWN";
+        case WIFI_AUTH_OPEN: return "OPEN";
+        case WIFI_AUTH_WEP: return "WEP";
+        case WIFI_AUTH_WPA_PSK: return "WPA_PSK";
+        case WIFI_AUTH_WPA2_PSK: return "WPA2_PSK";
+        case WIFI_AUTH_WPA_WPA2_PSK: return "WPA_WPA2_PSK";
+        case WIFI_AUTH_WPA2_ENTERPRISE: return "WPA2_ENTERPRISE";
+        case WIFI_AUTH_WPA3_PSK: return "WPA3_PSK";
+        case WIFI_AUTH_WPA2_WPA3_PSK: return "WPA2_WPA3_PSK";
+        default: return "UNKNOWN";
     }
 }
 
 // Scan WiFi networks
 void scanNetworks() {
-    WiFi.scanNetworks(true, true);
+    networks.clear();
+    int n = WiFi.scanNetworks(false, true, false, 200);
+    
+    for (int i = 0; i < n; ++i) {
+        WiFiNetwork net;
+        net.ssid = WiFi.SSID(i);
+        net.rssi = WiFi.RSSI(i);
+        net.channel = WiFi.channel(i);
+        net.encryption = WiFi.encryptionType(i);
+        WiFi.BSSID(i, net.bssid);
+        net.selected = false;
+        networks.push_back(net);
+    }
+    WiFi.scanDelete();
 }
 
 // Print scanned networks
 void printNetworks() {
-    int n = WiFi.scanComplete();
-    if (n == WIFI_SCAN_FAILED) {
-        Serial.println("Scan failed");
-        return;
-    } else if (n == WIFI_SCAN_RUNNING) {
-        Serial.println("Scan in progress...");
+    if (networks.size() == 0) {
+        Serial.println("No networks found. Run 'scan' first.");
         return;
     }
     
-    Serial.println("Found networks:");
-    for (int i = 0; i < n; ++i) {
-        Serial.print(i + 1);
-        Serial.print(": ");
-        Serial.print(WiFi.SSID(i));
-        Serial.print(" (");
-        Serial.print(WiFi.RSSI(i));
-        Serial.print(") ");
-        Serial.println(getEncryptionType(WiFi.encryptionType(i)));
+    Serial.println("\nFound networks:");
+    Serial.println("ID | SSID | RSSI | CH | ENC | BSSID");
+    Serial.println("---+------+------ +----+-----+-----------------");
+    
+    for (size_t i = 0; i < networks.size(); i++) {
+        Serial.printf("%2d | %s | %4d | %2d | %s | %02X:%02X:%02X:%02X:%02X:%02X\n",
+            i + 1,
+            networks[i].ssid.c_str(),
+            networks[i].rssi,
+            networks[i].channel,
+            getEncryptionType(networks[i].encryption).c_str(),
+            networks[i].bssid[0], networks[i].bssid[1], networks[i].bssid[2],
+            networks[i].bssid[3], networks[i].bssid[4], networks[i].bssid[5]);
     }
 }
 
-// Print stations
+// Print stations (placeholder)
 void printStations() {
     Serial.println("Stations list not implemented");
-}
-
-// Deauthenticate network
-void deauthNetwork(uint8_t networkIndex) {
-    Serial.print("Deauthing network: ");
-    Serial.println(WiFi.SSID(networkIndex));
-}
-
-// Deauthenticate station
-void deauthStation(uint8_t stationIndex) {
-    Serial.print("Deauthing station: ");
-    Serial.println(stationIndex);
 }
 
 // Generate random MAC
@@ -77,8 +69,8 @@ void getRandomMac(uint8_t* mac) {
     for (int i = 0; i < 6; i++) {
         mac[i] = random(256);
     }
-    mac[0] &= 0xFE;
-    mac[0] |= 0x02;
+    mac[0] &= 0xFE;  // Clear multicast bit
+    mac[0] |= 0x02;  // Set local bit
 }
 
 // Set random MAC address
